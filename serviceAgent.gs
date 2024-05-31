@@ -4,7 +4,7 @@
 // - GET SHARED DRIVE
 
 function createSharedDrive(driveName) {
-  if (getSharedDrive(driveName) != null) return null;
+  if (getSharedDrive(driveName) != null) return false;
   var requestID = generateUUID();
   var resource = {
     name: driveName
@@ -94,7 +94,7 @@ function listPermissionsInElement(elementId) {
 
 function setPermissionsToElement(elementId, userEmail, role) {
   if (!(variableInEnum(role, DriveRoles))) {
-    return null;
+    return false;
   }
   var resource = {
     role: role,
@@ -130,13 +130,46 @@ function deletePermissionInElement(elementId, permissionId) {
 // USERS
 //
 // https://developers.google.com/apps-script/advanced/admin-sdk-directory
-// - Get user
+// - GET USER
+// - CREATE USER
 
 function getUser(userEmail) {
   try {
     const user = AdminDirectory.Users.get(userEmail);
     return user.id;
   } catch (err) {
+    return false;
+  }
+}
+
+function addUser(firstName, lastName, user_type) {
+  if (!(variableInEnum(user_type, UserTypes))) {
+    return false;
+  }
+  let userName = createUserName(firstName, lastName, user_type);
+  if (!userName) return false;
+  let user = {
+    primaryEmail: userName,
+    name: {
+      givenName: firstName,
+      familyName: lastName,
+    },
+    password: Math.random().toString(36)
+  };
+  try {
+    return AdminDirectory.Users.insert(user).id;
+  } catch (err) {
+    Logger.log(JSON.stringify(err));
+    return false;
+  }
+}
+
+function deleteUser(userId) {
+  try {
+    AdminDirectory.Users.remove(userId);
+    return true;
+  } catch (err) {
+    Logger.log(JSON.stringify(err));
     return false;
   }
 }
